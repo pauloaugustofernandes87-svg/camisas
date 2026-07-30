@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Painel de Camisas</title>
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Camisas" />
+<meta name="theme-color" content="#13322A" />
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2313322A'/%3E%3Ctext x='50' y='68' font-size='55' text-anchor='middle' fill='%23D4A72C' font-family='sans-serif'%3E%F0%9F%91%95%3C/text%3E%3C/svg%3E" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2313322A'/%3E%3Ctext x='50' y='68' font-size='55' text-anchor='middle' fill='%23D4A72C' font-family='sans-serif'%3E%F0%9F%91%95%3C/text%3E%3C/svg%3E" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  .disp { font-family: 'Oswald', sans-serif; letter-spacing: 0.02em; }
+  input, select, textarea, button { font-family: 'Inter', ui-sans-serif, sans-serif; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid #D4A72C; outline-offset: 1px; }
+  button:focus-visible { outline: 2px solid #D4A72C; outline-offset: 2px; }
+  ::-webkit-scrollbar { width: 0; height: 0; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useMemo } = React;
+
+const STORAGE_KEY = "camisas-v1";
+const STATUS = ["Em estoque", "Anunciada", "Reservada", "Vendida", "Cancelada"];
+
+const STATUS_STYLE = {
+  "Em estoque": { bg: "#EDEAE1", fg: "#5B5647", dot: "#9C9583" },
+  "Anunciada": { bg: "#DCE8F5", fg: "#1F4E79", dot: "#3D7CB8" },
+  "Reservada": { bg: "#F6E7C8", fg: "#7A5300", dot: "#D4A72C" },
+  "Vendida": { bg: "#DBEEE0", fg: "#1E5A34", dot: "#2F8F5B" },
+  "Cancelada": { bg: "#F4DCDA", fg: "#7A2320", dot: "#C23B3B" },
+};
+
+const PITCH = "#13322A";
+const PITCH_DARK = "#0C231D";
+const PAPER = "#FAF8F3";
+const GOLD = "#D4A72C";
+const INK = "#20241F";
+const LINE = "#E4E0D4";
+
+const SEED = [
+  { id: 1, time: "Vila Nova", modelo: "2008 Vermelha", tamanho: "G", condicao: "Usada boa", origem: "Mania de Camisa e Futebol", dataAquisicao: "2026-01-11", precoPago: 125.91, custosExtras: 19.6, status: "Vendida", dataAnuncio: "2026-04-21", precoAnunciado: 300, dataVenda: "2026-04-30", precoVenda: 280, taxas: 24.47, obs: "Anunciada na OLX" },
+  { id: 2, time: "Real Betis", modelo: "2003/2004", tamanho: "M", condicao: "Usada boa", origem: "Coleção pessoal", dataAquisicao: "2026-03-10", precoPago: 50, custosExtras: 0, status: "Anunciada", dataAnuncio: "2026-04-21", precoAnunciado: 250, dataVenda: "", precoVenda: "", taxas: "", obs: "" },
+  { id: 3, time: "Kappa Lisa", modelo: "2003 Preta", tamanho: "M", condicao: "Usada ótima", origem: "Coleção pessoal", dataAquisicao: "2026-03-05", precoPago: 50, custosExtras: 17.97, status: "Anunciada", dataAnuncio: "2026-04-21", precoAnunciado: 50, dataVenda: "", precoVenda: "", taxas: "", obs: "" },
+  { id: 4, time: "Flamengo", modelo: "2006/07 Retrô RN China", tamanho: "M", condicao: "Nova sem etiqueta", origem: "Zheng", dataAquisicao: "2026-03-01", precoPago: 103.65, custosExtras: 68.53, status: "Vendida", dataAnuncio: "2026-04-21", precoAnunciado: 160, dataVenda: "2026-04-24", precoVenda: 140, taxas: 1.5, obs: "Anunciada na OLX" },
+  { id: 5, time: "Seleção Brasileira", modelo: "2024 Retrô Azul", tamanho: "P", condicao: "Usada ótima", origem: "Coleção pessoal", dataAquisicao: "2026-03-15", precoPago: 50, custosExtras: 0, status: "Vendida", dataAnuncio: "2026-04-21", precoAnunciado: 180, dataVenda: "2026-05-12", precoVenda: 120, taxas: 29.4, obs: "Enjoei" },
+  { id: 6, time: "Camiseta Masc Dry Fit", modelo: "2026 Vinho", tamanho: "M", condicao: "Nova sem etiqueta", origem: "SHEIN", dataAquisicao: "2026-05-04", precoPago: 11.06, custosExtras: 17.97, status: "Anunciada", dataAnuncio: "2026-05-05", precoAnunciado: 40, dataVenda: "", precoVenda: "", taxas: "", obs: "" },
+  { id: 7, time: "Camiseta Masc Dry Fit", modelo: "2026 Azul", tamanho: "M", condicao: "Nova sem etiqueta", origem: "SHEIN", dataAquisicao: "2026-05-04", precoPago: 11.06, custosExtras: 0, status: "Anunciada", dataAnuncio: "2026-05-05", precoAnunciado: 40, dataVenda: "", precoVenda: "", taxas: "", obs: "" },
+  { id: 8, time: "Camiseta Masc Dry Fit", modelo: "2026 Cinza", tamanho: "M", condicao: "Nova sem etiqueta", origem: "SHEIN", dataAquisicao: "2026-05-04", precoPago: 11.06, custosExtras: 0, status: "Anunciada", dataAnuncio: "2026-05-05", precoAnunciado: 40, dataVenda: "", precoVenda: "", taxas: "", obs: "" },
+  { id: 9, time: "Camiseta Masc Dry Fit", modelo: "2026 Preto", tamanho: "M", condicao: "Nova sem etiqueta", origem: "SHEIN", dataAquisicao: "2026-05-04", precoPago: 11.06, custosExtras: 0, status: "Anunciada", dataAnuncio: "2026-05-05", precoAnunciado: 40, dataVenda: "", precoVenda: "", taxas: "", obs: "" },
+  { id: 10, time: "Camiseta Masc Dry Fit", modelo: "2026 Branco", tamanho: "M", condicao: "Nova sem etiqueta", origem: "SHEIN", dataAquisicao: "2026-05-04", precoPago: 11.06, custosExtras: 0, status: "Anunciada", dataAnuncio: "2026-05-05", precoAnunciado: 40, dataVenda: "", precoVenda: "", taxas: "", obs: "" },
+  { id: 11, time: "Baby Look Brasil", modelo: "2026 Amarelo", tamanho: "M", condicao: "Nova sem etiqueta", origem: "SHEIN", dataAquisicao: "2026-05-04", precoPago: 20.69, custosExtras: 0, status: "Anunciada", dataAnuncio: "2026-05-05", precoAnunciado: 80, dataVenda: "", precoVenda: "", taxas: "", obs: "" },
+  { id: 12, time: "Body Bebê Brasil", modelo: "2026 Amarelo", tamanho: "M", condicao: "Nova sem etiqueta", origem: "SHEIN", dataAquisicao: "2026-05-04", precoPago: 17.29, custosExtras: 0, status: "Anunciada", dataAnuncio: "2026-05-05", precoAnunciado: 50, dataVenda: "", precoVenda: "", taxas: "", obs: "" },
+  { id: 13, time: "São Paulo", modelo: "2022/2023 3º uniforme", tamanho: "G", condicao: "Usada boa", origem: "Brechó", dataAquisicao: "2026-05-04", precoPago: 40, custosExtras: 0, status: "Em estoque", dataAnuncio: "", precoAnunciado: "", dataVenda: "", precoVenda: "", taxas: "", obs: "" },
+];
+
+const emptyForm = () => ({
+  id: null, time: "", modelo: "", tamanho: "", condicao: "Usada boa", origem: "",
+  dataAquisicao: new Date().toISOString().slice(0, 10), precoPago: "", custosExtras: "",
+  status: "Em estoque", dataAnuncio: "", precoAnunciado: "", dataVenda: "", precoVenda: "",
+  taxas: "", obs: "",
+});
+
+function num(v) {
+  const n = parseFloat(v);
+  return isNaN(n) ? 0 : n;
+}
+function fmtMoney(v) {
+  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+function fmtDate(d) {
+  if (!d) return "—";
+  const [y, m, day] = d.split("-");
+  return `${day}/${m}/${y}`;
+}
+function daysBetween(a, b) {
+  const d1 = new Date(a);
+  const d2 = new Date(b);
+  return Math.max(0, Math.round((d2 - d1) / 86400000));
+}
+function computeItem(raw) {
+  const custoTotal = num(raw.precoPago) + num(raw.custosExtras);
+  const vendida = raw.status === "Vendida" && raw.dataVenda && raw.precoVenda !== "";
+  const receitaLiquida = vendida ? num(raw.precoVenda) - num(raw.taxas) : null;
+  const lucro = vendida ? receitaLiquida - custoTotal : null;
+  const margem = vendida && custoTotal > 0 ? lucro / custoTotal : null;
+  const fimContagem = vendida ? raw.dataVenda : new Date().toISOString().slice(0, 10);
+  const tempoEstoque = raw.dataAquisicao ? daysBetween(raw.dataAquisicao, fimContagem) : null;
+  return { ...raw, custoTotal, receitaLiquida, lucro, margem, tempoEstoque };
+}
+
+function loadItems() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED));
+  return SEED;
+}
+
+function App() {
+  const [items, setItems] = useState(loadItems);
+  const [filter, setFilter] = useState("Todas");
+  const [search, setSearch] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [form, setForm] = useState(emptyForm());
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [saveError, setSaveError] = useState("");
+  const [toast, setToast] = useState("");
+
+  useEffect(() => {
+    if (toast) {
+      const t = setTimeout(() => setToast(""), 1800);
+      return () => clearTimeout(t);
+    }
+  }, [toast]);
+
+  function persist(next) {
+    setItems(next);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch (e) {
+      setSaveError("Não consegui gravar no armazenamento do navegador (" + (e && e.message ? e.message : "erro") + ").");
+    }
+  }
+
+  const computed = useMemo(() => items.map(computeItem), [items]);
+
+  const stats = useMemo(() => {
+    const cadastradas = computed.length;
+    const vendidas = computed.filter((i) => i.status === "Vendida");
+    const ativos = computed.filter((i) => ["Em estoque", "Anunciada", "Reservada"].includes(i.status));
+    const lucroRealizado = vendidas.reduce((s, i) => s + (i.lucro || 0), 0);
+    const receitaTotal = vendidas.reduce((s, i) => s + (i.receitaLiquida || 0), 0);
+    const capitalAtivo = ativos.reduce((s, i) => s + i.custoTotal, 0);
+    const ticketMedio = vendidas.length ? vendidas.reduce((s, i) => s + num(i.precoVenda), 0) / vendidas.length : 0;
+    const margemMedia = vendidas.length ? vendidas.reduce((s, i) => s + (i.margem || 0), 0) / vendidas.length : 0;
+    return { cadastradas, vendidasCount: vendidas.length, ativosCount: ativos.length, lucroRealizado, receitaTotal, capitalAtivo, ticketMedio, margemMedia };
+  }, [computed]);
+
+  const statusBreakdown = useMemo(() => {
+    return STATUS.map((s) => {
+      const list = computed.filter((i) => i.status === s);
+      return {
+        status: s,
+        qtd: list.length,
+        custoTotal: list.reduce((a, i) => a + i.custoTotal, 0),
+        vendaBruta: list.reduce((a, i) => a + num(i.precoVenda), 0),
+        lucro: list.reduce((a, i) => a + (i.lucro || 0), 0),
+      };
+    });
+  }, [computed]);
+
+  const filtered = useMemo(() => {
+    return computed
+      .filter((i) => (filter === "Todas" ? true : i.status === filter))
+      .filter((i) => {
+        const q = search.trim().toLowerCase();
+        if (!q) return true;
+        return (i.time + " " + i.modelo + " " + i.origem).toLowerCase().includes(q);
+      })
+      .sort((a, b) => b.id - a.id);
+  }, [computed, filter, search]);
+
+  function openNew() {
+    setForm(emptyForm());
+    setSaveError("");
+    setModalOpen(true);
+  }
+  function openEdit(item) {
+    setForm({ ...item });
+    setSaveError("");
+    setModalOpen(true);
+  }
+
+  function handleSave(e) {
+    e.preventDefault();
+    try {
+      if (!(form.time || "").trim()) {
+        setSaveError("Preencha o campo Time / Clube antes de salvar.");
+        return;
+      }
+      const { custoTotal, receitaLiquida, lucro, margem, tempoEstoque, ...clean } = form;
+      let next;
+      if (clean.id) {
+        next = items.map((i) => (i.id === clean.id ? { ...clean } : i));
+      } else {
+        const nextId = items.length ? Math.max(...items.map((i) => i.id)) + 1 : 1;
+        next = [...items, { ...clean, id: nextId }];
+      }
+      setSaveError("");
+      persist(next);
+      setModalOpen(false);
+      setToast("Salvo!");
+    } catch (err) {
+      setSaveError("Não consegui salvar: " + (err && err.message ? err.message : "erro desconhecido"));
+    }
+  }
+
+  function handleDelete(id) {
+    persist(items.filter((i) => i.id !== id));
+    setConfirmDelete(null);
+    setToast("Excluído");
+  }
+
+  function setF(key, value) {
+    setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  return (
+    <div style={{ background: PAPER, minHeight: "100vh", fontFamily: "Inter, ui-sans-serif, sans-serif", color: INK }}>
+      <header style={{ background: PITCH, color: PAPER, paddingTop: "env(safe-area-inset-top)" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 16px 24px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
+            <div style={{ background: GOLD, borderRadius: 8, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>👕</div>
+            <div>
+              <div className="disp" style={{ fontSize: 20, fontWeight: 700, textTransform: "uppercase", lineHeight: 1 }}>Painel de Camisas</div>
+              <div style={{ fontSize: 12, opacity: 0.65, marginTop: 2 }}>Controle de compra, anúncio e venda</div>
+            </div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
+            <ScoreCell label="Cadastradas" value={stats.cadastradas} />
+            <ScoreCell label="Vendidas" value={stats.vendidasCount} />
+            <ScoreCell label="Itens ativos" value={stats.ativosCount} />
+            <ScoreCell label="Lucro realizado" value={fmtMoney(stats.lucroRealizado)} accent={stats.lucroRealizado >= 0 ? "#7CD9A0" : "#E38E8B"} />
+          </div>
+        </div>
+      </header>
+
+      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "18px 16px 100px" }}>
+        {saveError && (
+          <div style={{ background: "#F4DCDA", color: "#7A2320", padding: "10px 14px", borderRadius: 8, fontSize: 13, marginBottom: 14 }}>{saveError}</div>
+        )}
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 18 }}>
+          <MiniStat icon="💰" label="Receita líquida total" value={fmtMoney(stats.receitaTotal)} />
+          <MiniStat icon="📈" label="Margem média" value={(stats.margemMedia * 100).toFixed(1) + "%"} />
+          <MiniStat icon="📦" label="Capital em estoque ativo" value={fmtMoney(stats.capitalAtivo)} />
+          <MiniStat icon="🏷️" label="Ticket médio vendido" value={fmtMoney(stats.ticketMedio)} />
+        </div>
+
+        <div style={{ background: "#fff", border: `1px solid ${LINE}`, borderRadius: 10, padding: 14, marginBottom: 20, overflowX: "auto" }}>
+          <div className="disp" style={{ fontSize: 13, fontWeight: 600, textTransform: "uppercase", color: "#6b6656", marginBottom: 10 }}>Resumo por status</div>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 480 }}>
+            <thead>
+              <tr style={{ textAlign: "left", color: "#8a8570" }}>
+                <th style={{ padding: "4px 8px", fontWeight: 500 }}>Status</th>
+                <th style={{ padding: "4px 8px", fontWeight: 500 }}>Qtd</th>
+                <th style={{ padding: "4px 8px", fontWeight: 500 }}>Custo total</th>
+                <th style={{ padding: "4px 8px", fontWeight: 500 }}>Venda bruta</th>
+                <th style={{ padding: "4px 8px", fontWeight: 500 }}>Lucro</th>
+              </tr>
+            </thead>
+            <tbody>
+              {statusBreakdown.map((s) => (
+                <tr key={s.status} style={{ borderTop: `1px solid ${LINE}` }}>
+                  <td style={{ padding: "6px 8px" }}><StatusPill status={s.status} /></td>
+                  <td style={{ padding: "6px 8px" }}>{s.qtd}</td>
+                  <td style={{ padding: "6px 8px" }}>{fmtMoney(s.custoTotal)}</td>
+                  <td style={{ padding: "6px 8px" }}>{fmtMoney(s.vendaBruta)}</td>
+                  <td style={{ padding: "6px 8px", color: s.lucro < 0 ? "#C23B3B" : "#1E5A34" }}>{fmtMoney(s.lucro)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14, alignItems: "center" }}>
+          <div style={{ position: "relative", flex: "1 1 200px" }}>
+            <span style={{ position: "absolute", left: 10, top: 8, color: "#9c9583", fontSize: 14 }}>🔍</span>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar time, modelo, fornecedor…"
+              style={{ width: "100%", padding: "8px 10px 8px 32px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 14 }}
+            />
+          </div>
+          <button onClick={openNew} style={{ display: "flex", alignItems: "center", gap: 6, background: PITCH, color: PAPER, border: "none", borderRadius: 8, padding: "9px 14px", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+            + Nova camisa
+          </button>
+        </div>
+
+        <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, marginBottom: 16 }}>
+          {["Todas", ...STATUS].map((s) => (
+            <button key={s} onClick={() => setFilter(s)} style={{
+              whiteSpace: "nowrap", padding: "6px 12px", borderRadius: 999,
+              border: `1px solid ${filter === s ? PITCH : LINE}`,
+              background: filter === s ? PITCH : "#fff", color: filter === s ? PAPER : INK,
+              fontSize: 12.5, fontWeight: 600, cursor: "pointer",
+            }}>{s}</button>
+          ))}
+        </div>
+
+        {filtered.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "40px 10px", color: "#8a8570", fontSize: 14 }}>
+            Nenhuma camisa encontrada. Ajuste os filtros ou cadastre uma nova.
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {filtered.map((item) => (
+              <ItemCard key={item.id} item={item} onEdit={() => openEdit(item)} onDelete={() => setConfirmDelete(item.id)} />
+            ))}
+          </div>
+        )}
+      </main>
+
+      {modalOpen && <FormModal form={form} setF={setF} onClose={() => setModalOpen(false)} onSave={handleSave} />}
+
+      {confirmDelete !== null && (
+        <div style={overlayStyle}>
+          <div style={{ ...cardStyle, maxWidth: 340 }}>
+            <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>Excluir camisa?</div>
+            <div style={{ fontSize: 13.5, color: "#6b6656", marginBottom: 16 }}>Essa ação não pode ser desfeita.</div>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button onClick={() => setConfirmDelete(null)} style={btnGhost}>Cancelar</button>
+              <button onClick={() => handleDelete(confirmDelete)} style={{ ...btnGhost, background: "#C23B3B", color: "#fff", border: "none" }}>Excluir</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toast && (
+        <div style={{ position: "fixed", bottom: 18, left: "50%", transform: "translateX(-50%)", background: PITCH_DARK, color: PAPER, padding: "8px 16px", borderRadius: 999, fontSize: 13, zIndex: 100 }}>
+          {toast}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ScoreCell({ label, value, accent }) {
+  return (
+    <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: 10, padding: "10px 12px" }}>
+      <div className="disp" style={{ fontSize: 24, fontWeight: 700, color: accent || "#fff", lineHeight: 1 }}>{value}</div>
+      <div style={{ fontSize: 11, opacity: 0.65, marginTop: 4 }}>{label}</div>
+    </div>
+  );
+}
+function MiniStat({ icon, label, value }) {
+  return (
+    <div style={{ background: "#fff", border: `1px solid ${LINE}`, borderRadius: 10, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
+      <div style={{ fontSize: 15 }}>{icon}</div>
+      <div>
+        <div style={{ fontSize: 13.5, fontWeight: 700 }}>{value}</div>
+        <div style={{ fontSize: 10.5, color: "#8a8570" }}>{label}</div>
+      </div>
+    </div>
+  );
+}
+function StatusPill({ status }) {
+  const s = STATUS_STYLE[status];
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: s.bg, color: s.fg, padding: "3px 9px", borderRadius: 999, fontSize: 11.5, fontWeight: 600 }}>
+      <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.dot }} />
+      {status}
+    </span>
+  );
+}
+function ItemCard({ item, onEdit, onDelete }) {
+  const s = STATUS_STYLE[item.status];
+  return (
+    <div style={{ background: "#fff", border: `1px solid ${LINE}`, borderLeft: `5px solid ${s.dot}`, borderRadius: 10, padding: 14, display: "flex", gap: 12 }}>
+      <div className="disp" style={{ fontSize: 22, fontWeight: 700, color: "#c7c1ac", minWidth: 34, textAlign: "center" }}>{item.id}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 15 }}>{item.time}</div>
+            <div style={{ fontSize: 12.5, color: "#8a8570" }}>{item.modelo} · {item.tamanho} · {item.condicao}</div>
+          </div>
+          <StatusPill status={item.status} />
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "4px 12px", fontSize: 12.5, marginTop: 10, color: "#4a4638" }}>
+          <div>Custo total: <b>{fmtMoney(item.custoTotal)}</b></div>
+          <div>Em estoque: <b>{item.tempoEstoque} dias</b></div>
+          {item.status === "Vendida" ? (
+            <>
+              <div>Venda: <b>{fmtMoney(num(item.precoVenda))}</b> em {fmtDate(item.dataVenda)}</div>
+              <div>Lucro: <b style={{ color: item.lucro < 0 ? "#C23B3B" : "#1E5A34" }}>{fmtMoney(item.lucro)} ({(item.margem * 100).toFixed(0)}%)</b></div>
+            </>
+          ) : item.precoAnunciado ? (
+            <div style={{ gridColumn: "1 / -1" }}>Anunciada por <b>{fmtMoney(num(item.precoAnunciado))}</b> em {fmtDate(item.dataAnuncio)}</div>
+          ) : (
+            <div style={{ gridColumn: "1 / -1", color: "#a39d87" }}>Ainda não anunciada</div>
+          )}
+        </div>
+        {item.obs && <div style={{ fontSize: 11.5, color: "#a39d87", marginTop: 6, fontStyle: "italic" }}>{item.obs}</div>}
+        <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+          <button onClick={onEdit} style={{ ...btnGhost, padding: "5px 10px", fontSize: 12 }}>✎ Editar</button>
+          <button onClick={onDelete} style={{ ...btnGhost, padding: "5px 10px", fontSize: 12, color: "#C23B3B", borderColor: "#F0C9C7" }}>🗑 Excluir</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const overlayStyle = { position: "fixed", inset: 0, background: "rgba(12,20,17,0.5)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 50, padding: 0 };
+const cardStyle = { background: PAPER, borderRadius: "14px 14px 0 0", padding: 18, width: "100%", maxHeight: "90vh", overflowY: "auto" };
+const btnGhost = { background: "#fff", border: `1px solid ${LINE}`, borderRadius: 8, padding: "8px 12px", fontSize: 13, cursor: "pointer", display: "inline-flex", alignItems: "center" };
+const label2 = { fontSize: 11.5, color: "#8a8570", fontWeight: 600, marginBottom: 3, display: "block" };
+const inputStyle = { width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 14, background: "#fff" };
+
+function Field({ children, span }) {
+  return <div style={{ gridColumn: span ? "1 / -1" : "auto" }}>{children}</div>;
+}
+
+function FormModal({ form, setF, onClose, onSave }) {
+  const vendida = form.status === "Vendida";
+  return (
+    <div style={{ ...overlayStyle, alignItems: "center", padding: 16 }}>
+      <form onSubmit={onSave} style={{ ...cardStyle, borderRadius: 14, maxWidth: 520 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+          <div className="disp" style={{ fontSize: 17, fontWeight: 700, textTransform: "uppercase" }}>{form.id ? "Editar camisa" : "Nova camisa"}</div>
+          <button type="button" onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#8a8570", fontSize: 18 }}>✕</button>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <Field span>
+            <label style={label2}>Time / Clube</label>
+            <input required style={inputStyle} value={form.time} onChange={(e) => setF("time", e.target.value)} />
+          </Field>
+          <Field span>
+            <label style={label2}>Temporada / Modelo</label>
+            <input style={inputStyle} value={form.modelo} onChange={(e) => setF("modelo", e.target.value)} />
+          </Field>
+          <Field>
+            <label style={label2}>Tamanho</label>
+            <input style={inputStyle} value={form.tamanho} onChange={(e) => setF("tamanho", e.target.value)} />
+          </Field>
+          <Field>
+            <label style={label2}>Condição</label>
+            <select style={inputStyle} value={form.condicao} onChange={(e) => setF("condicao", e.target.value)}>
+              {["Nova com etiqueta", "Nova sem etiqueta", "Usada ótima", "Usada boa", "Usada regular"].map((c) => <option key={c}>{c}</option>)}
+            </select>
+          </Field>
+          <Field span>
+            <label style={label2}>Origem / Fornecedor</label>
+            <input style={inputStyle} value={form.origem} onChange={(e) => setF("origem", e.target.value)} />
+          </Field>
+          <Field>
+            <label style={label2}>Data de aquisição</label>
+            <input type="date" style={inputStyle} value={form.dataAquisicao} onChange={(e) => setF("dataAquisicao", e.target.value)} />
+          </Field>
+          <Field>
+            <label style={label2}>Status</label>
+            <select style={inputStyle} value={form.status} onChange={(e) => setF("status", e.target.value)}>
+              {STATUS.map((s) => <option key={s}>{s}</option>)}
+            </select>
+          </Field>
+          <Field>
+            <label style={label2}>Preço pago (R$)</label>
+            <input type="number" step="0.01" style={inputStyle} value={form.precoPago} onChange={(e) => setF("precoPago", e.target.value)} />
+          </Field>
+          <Field>
+            <label style={label2}>Custos extras (R$)</label>
+            <input type="number" step="0.01" style={inputStyle} value={form.custosExtras} onChange={(e) => setF("custosExtras", e.target.value)} />
+          </Field>
+          <Field>
+            <label style={label2}>Data do anúncio</label>
+            <input type="date" style={inputStyle} value={form.dataAnuncio} onChange={(e) => setF("dataAnuncio", e.target.value)} />
+          </Field>
+          <Field>
+            <label style={label2}>Preço anunciado (R$)</label>
+            <input type="number" step="0.01" style={inputStyle} value={form.precoAnunciado} onChange={(e) => setF("precoAnunciado", e.target.value)} />
+          </Field>
+          {vendida && (
+            <>
+              <Field>
+                <label style={label2}>Data da venda</label>
+                <input type="date" style={inputStyle} value={form.dataVenda} onChange={(e) => setF("dataVenda", e.target.value)} />
+              </Field>
+              <Field>
+                <label style={label2}>Preço venda bruto (R$)</label>
+                <input type="number" step="0.01" style={inputStyle} value={form.precoVenda} onChange={(e) => setF("precoVenda", e.target.value)} />
+              </Field>
+              <Field span>
+                <label style={label2}>Taxas / descontos (R$)</label>
+                <input type="number" step="0.01" style={inputStyle} value={form.taxas} onChange={(e) => setF("taxas", e.target.value)} />
+              </Field>
+            </>
+          )}
+          <Field span>
+            <label style={label2}>Observações</label>
+            <textarea rows={2} style={{ ...inputStyle, resize: "vertical" }} value={form.obs} onChange={(e) => setF("obs", e.target.value)} />
+          </Field>
+        </div>
+        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 18 }}>
+          <button type="button" onClick={onClose} style={btnGhost}>Cancelar</button>
+          <button type="submit" style={{ ...btnGhost, background: PITCH, color: PAPER, border: "none", fontWeight: 600 }}>Salvar</button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
